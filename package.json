@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/serve.js"
+    "start": "node --tls-min-v1.0   src/serve.js  --insecure"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.20.0",
+    "b1-service-layer": "^1.0.3",
     "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-session": "^1.17.1",
