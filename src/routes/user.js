@@ -3,18 +3,9 @@ const router = express.Router();
 const request = require('request');
 const config = require('../config');
 const ServiceLayer = require("b1-service-layer")
+const settings=  require("../db")
 
 
-
-
-const settings={
-  "host": "https://ah-01.columbus-systems.de",
-        "port": 50000,
-        "version": "v1",
-        "username" : "COL-HOSTING\\demo2",
-        "password" : "SAP2020?",
-        "company": "SBO_OECADV1_DEMO"
-    }
 
 async  function save_user(user){
   var sl = new ServiceLayer()
