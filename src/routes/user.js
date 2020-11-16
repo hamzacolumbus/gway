@@ -2,54 +2,68 @@ const express = require('express');
 const router = express.Router();
 const request = require('request');
 const config = require('../config');
+const ServiceLayer = require("b1-service-layer")
 
-router.get('/', (req, res) => {
-  // token in session -> get user data and send it back to the Angular app
-  if (req.session.token) {
+
+
+
+const settings={
+  "host": "https://ah-01.columbus-systems.de",
+        "port": 50000,
+        "version": "v1",
+        "username" : "COL-HOSTING\\demo2",
+        "password" : "SAP2020?",
+        "company": "SBO_OECADV1_DEMO"
+    }
+
+async  function save_user(user){
+  var sl = new ServiceLayer()
+  let found
+  await sl.createSession(settings).catch(data=>  console.log(data))
+  await sl.get(`EmployeesInfo?$filter=eMail eq '${user.preferred_username}'`)
+  .then(data=>{
+    console.log(data);
+    data.value.length==0?  found=  null  :  found=  data.value[0]
+  })
+  .catch(data=>  console.log("error"))
+  console.log("found  ",  found);
+  if (found  !=null) {
+    return found
+  }
+  else{
+    let name=  user.name.split(' ')
+    found={
+      FirstName:  name[0],
+      LastName:  name[1],
+
+      eMail:  user.preferred_username
+    }
+    await sl.post(`EmployeesInfo`,found)
+    .then(data=>{
+      res.send(data)
+      console.log(data);
+    })
+    .catch(data=>  console.log("error"))
+  }
+}
+router.post('/', (req, res) => {
+  if (req.body.token) {
     request(
       {
         method: 'GET',
-        uri: `http://localhost:${config.fusionAuthPort}/oauth2/userinfo`,
+        uri: `https://dev-9754813.okta.com/oauth2/default/v1/userinfo`,
         headers: {
-          'Authorization': 'Bearer ' + req.session.token
+          'Authorization': 'Bearer ' + req.body.token
         }
       },
 
       // callback
       (error, response, body) => {
-        let userInfoResponse = JSON.parse(body);
-
-        // valid token -> get more user data and send it back to the Angular app
-        request(
-          // GET request to /registration endpoint
-          {
-            method: 'GET',
-            uri: `http://localhost:${config.fusionAuthPort}/api/user/registration/${userInfoResponse.sub}/${config.applicationID}`,
-            json: true,
-            headers: {
-              'Authorization': config.apiKey
-            }
-          },
-
-          // callback
-          (error, response, body) => {
-            res.send(
-              {
-                ...userInfoResponse,
-                ...body // body is results from the registration endpoint:w
-              }
-            );
-          }
-        );
-      }
-    );
-  }
-
-  // no token -> send nothing
-  else {
-    res.send({});
-  }
-});
+        let user = JSON.parse(body);
+        console.log(user);
+        save_user(user)
+      })}}
+);
 
 module.exports = router;
 
